@@ -1,0 +1,44 @@
+import FreeCAD
+
+case = 3
+doc = App.ActiveDocument
+
+# This gives all top level (i.e. without parent) bodies and link to bodies
+bodies = [ o for o in App.ActiveDocument.Objects 
+      if o.getLinkedObject(True).isDerivedFrom('PartDesign::Body') and not o.Parents ]
+
+# add a new body
+body = App.ActiveDocument.addObject('PartDesign::Body', 'Body')
+#set new placement
+pl = FreeCAD.Placement()
+pl.move(FreeCAD.Vector(-34,0,29.3))
+body.Placement = pl
+
+if case==1:
+	# preselection of bodies and then create the binder
+	for index, obj in enumerate(bodies):
+		Gui.Selection.addSelection(bodies[index])
+	#create new binder
+	binder = body.newObject('PartDesign::SubShapeBinder','Binder')
+if case==2:
+	 #set support via script
+	#create new binder
+	binder = body.newObject('PartDesign::SubShapeBinder','Binder')
+	 #set support
+	binder.setPropertyStatus('Support','-Immutable')
+	binder.Support = bodies
+if case==3:
+	# select the binder and drop objects
+	#create new binder
+	binder = body.newObject('PartDesign::SubShapeBinder','Binder')
+	# select the binder
+	Gui.Selection.clearSelection()
+	Gui.Selection.addSelection(doc.Name,body.Name,binder.Name+'.')
+	#drop objects
+	for index, obj in enumerate(bodies):
+		binder.ViewObject.dropObject(bodies[index],None,'',[])
+
+#update binder
+#Gui.Selection.clearSelection()
+#Gui.Selection.addSelection(doc.Name,body.Name,binder.Name+'.')
+#binder.ViewObject.doubleClicked()

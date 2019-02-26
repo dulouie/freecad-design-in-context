@@ -1,0 +1,11 @@
+
+
+
+
+
+Gui.Selection.addSelection('asm3','Assembly','Parts.Link001.Pad.')
+#Gui.Selection.addSelection('asm3','Assembly','Parts.Link002.Pad.')
+Gui.runCommand('PartDesign_SubShapeBinder',0)
+
+
+Gui.Selection.addSelection(

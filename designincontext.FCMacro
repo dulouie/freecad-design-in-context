@@ -1,0 +1,128 @@
+import FreeCAD
+import PartDesign
+
+class DesignInContext:
+	def __init__(self): 
+		self.doc = App.ActiveDocument
+		
+	# a mate is a LCS of a body who you like to connect your new part	
+	def setMateConnector(self,obj):
+		self.mate = obj
+	
+	def createPartLink(self):
+		# new document
+		self.newDoc = App.newDocument("newPart")
+		#new body
+		self.body = self.newDoc.addObject('PartDesign::Body','newBody')
+		self.body.Origin.Visibility = 1
+	def saveDocument(self):
+		#save document
+		self.newDoc.saveAs('/home/arne/sandbox/' + self.newDoc.Name)
+		App.setActiveDocument(self.doc.Name)
+		#create a link
+		self.link = self.doc.addObject('App::Link','newLink')
+		self.link.setLink(self.body)
+	
+	def setPlacement(self):
+		self.matebody = self.getBodyOf(self.mate)
+		self.printPlacement(self.mate)
+		self.printPlacement(self.matebody)
+		self.printPlacement(self.link)
+		# calculate placement from mate and mates body
+		self.link.Placement = self.matebody.Placement.multiply(self.mate.Placement)
+	
+	def getAllBodies(self):
+		# This gives all top level (i.e. without parent) bodies and link to bodies
+		self.bodies = [ o for o in App.ActiveDocument.Objects 
+			if o.getLinkedObject(True).isDerivedFrom('PartDesign::Body') and not o.Parents ]
+
+	def bodies2Part(self):
+		self.part = self.doc.addObject('App::Part','Part')
+		for body in self.bodies:
+			body.adjustRelativeLinks(self.part)
+			self.part.addObject(body)
+
+	def getBodyOf(self, obj):
+		# get body or link from object
+		if len(obj.Parents) > 1:
+			return obj.Parents[1][0]
+		else:
+			return obj.Parents[0][0]
+
+	def updateBinder(self):
+		Gui.Selection.clearSelection()
+		Gui.Selection.addSelection(self.doc.Name,self.link.Name,self.binder.Name+'.')
+		self.binder.ViewObject.doubleClicked()
+
+	# legacy function
+	def dropObjects(self):
+		# select the binder
+		Gui.Selection.clearSelection()
+		Gui.Selection.addSelection(self.doc.Name,self.link.Name,self.binder.Name+'.')
+		for index, obj in enumerate(self.bodies):
+			self.binder.ViewObject.dropObject(self.bodies[index],None,'',[])
+
+	def setSupport(self):
+		Gui.Selection.addSelection(self.doc.Name,self.link.Name,self.binder.Name+'.')
+		self.binder.setPropertyStatus('Support','-Immutable')
+		self.binder.Support = self.bodies
+	
+	def shapebinderAll(self):
+		#create new binder
+		self.binder = self.body.newObject('PartDesign::SubShapeBinder','context')
+
+		self.setSupport()
+		self.updateBinder()
+		# freeze binder
+		self.binder.BindMode=('Frozen')
+		# set visual settings
+		self.binder.ViewObject.Transparency = 50
+		self.binder.ViewObject.ShapeColor=(0.95,0.95,0.95)
+		self.binder.ViewObject.LineColor=(0.0,0.0,0.0)
+		self.matebody.Visibility = 0
+	
+	def setAllVisibility(self, value):
+		# set visibility for all bodies
+		for body in self.bodies:
+			body.Visibility = value
+		Gui.Selection.clearSelection()
+
+	def getBinder(self):
+		return self.binder
+
+	def getBody(self):
+		return self.body
+
+	def printPlacement(self, obj):
+		print('Placement:')
+		print(obj.Name+ '  ' + str(obj.Placement))
+
+	def printGlobalPlacement(self, obj):
+		print('GlobalPlacement:')
+		print(obj.Name+ '  ' + str(obj.getGlobalPlacement()))
+
+
+
+doc = App.ActiveDocument
+sel = FreeCADGui.Selection.getSelection()[0]
+part = DesignInContext()
+part.getAllBodies()
+
+
+if doc.FileName:
+	if sel.isDerivedFrom('PartDesign::CoordinateSystem') :
+		part.setMateConnector(sel)
+		part.createPartLink()
+		part.saveDocument()
+		part.setPlacement()
+		part.shapebinderAll()
+		part.setAllVisibility(False)
+	else :
+		print("select LCS")
+
+else:
+	print("save doc")
+
+
+
+	

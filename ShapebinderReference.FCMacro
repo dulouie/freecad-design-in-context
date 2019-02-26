@@ -1,0 +1,79 @@
+import FreeCAD
+
+class SelectionPath:
+	def resolve(self, obj):
+		self.obj = obj
+		self.doc =  App.ActiveDocument
+		if len(obj.Parents)== 1:
+			self.linked = False
+			self.root = obj.Parents[0][0]
+			self.path = obj.Parents[0][1]
+			print("[0]rootObject= " + self.root.Name)
+			print("[0]SelectionPath= " + self.path)
+		else:
+			self.linked = True
+			self.root = obj.Parents[0][0]
+			self.path = obj.Parents[0][1]
+			self.root2 = obj.Parents[1][0]
+			self.path2 = obj.Parents[1][1]
+			print("[0]rootObject= " + self.root.Name)
+			print("[0]SelectionPath= " + self.path)
+			print("[1]rootObject= " + self.root2.Name)
+			print("[1]SelectionPath= " + self.path2 )
+	def select(self):
+		Gui.Selection.clearSelection()
+		if self.linked:
+			Gui.Selection.addSelection(doc.Name,self.root2.Name,self.path2)
+		else:
+			Gui.Selection.addSelection(doc.Name,self.root.Name,self.path)
+	def printList(self, list):
+		#list = sel.InListRecursive
+		for index, obj in enumerate(list):
+			print("index= " + str(index) )
+			print("Label= " + obj.Label)
+			print("Name= " + obj.Name)
+			print("TypeID= " + obj.TypeId)
+			print("Fullname= " + obj.FullName + "\n")
+	def newBody(self):
+		self.newbody = doc.addObject('PartDesign::Body','newPart')
+		Gui.ActiveDocument.ActiveView.setActiveObject('pdbody',self.newbody)
+		return self.newbody
+	def bindShape(self):
+		binder = self.newbody.newObject('PartDesign::SubShapeBinder','context')
+		
+		#if self.linked:
+		#	support = [(self.root2,(self.path2))]
+		#else:
+		#	support = [(self.root,(self.path))]	
+		#binder.Support= support
+		#print('binder.Support=' + str(support))
+		bpath = binder.Parents[0][1]
+		print(bpath)
+		print(self.obj)
+		binder.ViewObject.dropObject(self.obj,self.root,bpath,[])
+		#self.select()
+		#binder.ViewObject.doubleClicked()
+		#print('Binder args:')
+		#print(self.obj)
+		#print(self.root2)
+		#print(self.path2)
+
+doc = App.ActiveDocument
+s = SelectionPath()
+sel = App.Gui.Selection.getSelection()[0]
+if sel.isDerivedFrom('PartDesign::CoordinateSystem') :
+	feature = sel.OutList[0]
+else:
+	feature = sel
+	s.resolve(feature)
+	new = s.newBody()
+	#new.Placement = s.root2.Placement
+	s.select()
+	#s.bindShape()
+#printList(list)
+
+
+#Gui.Selection.addSelection('assembly','Assembly','Parts.Link001.Pad.')
+#print("String: " + doc.Name + ',' + list[-1].Name + ',' + list[-2].Name + '.' + list[0].Name + '.' + selection.Name + '.')
+#Gui.Selection.addSelection(doc.Name,list[-1].Name,'Parts.Link001.Pad.')
+print ("\n\n")

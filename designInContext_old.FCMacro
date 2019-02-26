@@ -1,0 +1,76 @@
+import FreeCAD
+import PartDesign
+import PartDesignGui
+
+def newPart(mate):
+	#parent = findBodyOf(sel)
+
+	# search for link
+	ref = findLinkOf(sel)
+	refBody = ref.LinkedObject
+	refFeature = findLastFeature(refBody)
+
+	newdoc = App.newDocument("newPart")
+	newbody = newdoc.addObject('PartDesign::Body','newPart')
+	newbody.Origin.Visibility = 1
+	newdoc.saveAs("/home/arne/Documents/newpart0000")
+
+	#Gui.Selection.addSelection('Unnamed','Body')
+	App.setActiveDocument(doc.Name)
+	link = doc.addObject('App::Link','newPart')
+	link.LinkedObject = (newbody,'')
+	#linkPlacement = mate.Placement.multiply(applink.Placement)
+	#print ( linkPlacement )
+	#link.Placement = mate.getPlacement()
+	link.Placement = ref.Placement.multiply(mate.Placement)
+
+	#Gui.ActiveDocument.ActiveView.setActiveObject('pdbody',body)
+
+
+	#subshapebinder
+	linkbody = link.LinkedObject
+	#binder = linkbody.newObject('PartDesign::SubShapeBinder','context')
+	#Gui.Selection.addSelection(doc.Name,link.Name,binder.Name +'.')
+
+	Gui.Selection.clearSelection()
+	Gui.Selection.addSelection(ref)
+	Gui.runCommand('PartDesign_SubShapeBinder',0)
+
+	#binder.ViewObject.dropObject(ref,None,'',[])
+	#updateBinder(binder)
+	binder.BindMode=('Frozen')
+	binder.ViewObject.Transparency = 50
+	binder.ViewObject.ShapeColor=(0.95,0.95,0.95)
+	binder.ViewObject.LineColor=(0.0,0.0,0.0)
+	ref.Visibility = 0
+
+def findBodyOf(feature):
+	bodies = feature.Document.findObjects("PartDesign::Body")
+	result = [body for body in bodies if feature in body.Group]
+	assert(len(result)<=1)
+	return None if len(result)==0 else result[0]
+
+def findLinkOf(sel):
+	objs = sel.InListRecursive
+	for obj in objs:
+		if obj.isDerivedFrom("App::Link"):
+			print("found App::Link : "+ str(obj.Name))
+			return obj
+
+def findLastFeature(body):
+	feature = body.OutList[0]
+	print("last feature: " + str(feature.Name))
+	return feature
+
+def updateBinder(binder):
+	Gui.Selection.clearSelection()
+	Gui.Selection.addSelection(binder)
+	binder.ViewObject.doubleClicked()
+	Gui.Selection.clearSelection()
+
+doc = App.ActiveDocument
+sel = FreeCADGui.Selection.getSelection()[0]
+if sel.isDerivedFrom('PartDesign::CoordinateSystem') :
+	newPart(sel)
+else :
+	print("select LCS")

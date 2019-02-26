@@ -1,0 +1,75 @@
+import FreeCAD
+
+doc =App.ActiveDocument
+
+def listAllBodies(doc):
+	objects = doc.Objects
+	bodies = []
+	for obj in objects:
+		if obj.isDerivedFrom("PartDesign::Body") :
+			bodies.append(obj)
+	print("list bodies: " +str(bodies))
+	return bodies
+
+def listAllLinks(doc):
+	objects = doc.Objects
+	links = []
+	for obj in objects:
+		if obj.isDerivedFrom("App::Link") :
+			links.append(obj)
+		else :
+			return
+	print("list links: "+ str(links))
+	linkout = links[0].OutListRecursive
+	print("linkOut: " +str(linkout))
+	print("link feature: " + str(linkout[9].Name))
+	return links
+		
+
+
+def removeOwnBodyfromList(list, body):
+	body = findBodyOf(sel)
+	for obj in list:
+		if obj == body:
+			list.remove(obj)
+			return list
+
+def findBodyOf(obj):
+	objects = obj.InListRecursive
+	for obj in objects:
+		if obj.isDerivedFrom("PartDesign::Body"):
+			return obj
+
+def lastFeature(obj):
+	last = obj.OutList[0]
+	print("last feature: " + str(last))
+	return last
+
+def listAllLastFeatures(list):
+	features = []
+	for obj in list:
+		features.append(lastFeature(obj))
+	print("last features: " + str(features))
+	return features
+		
+
+def selectListItems(list):
+	Gui.Selection.clearSelection()
+	for obj in list:
+		print(obj.Name)
+		objName = obj.Name
+		obj = App.ActiveDocument.getObject(objName)
+		Gui.Selection.addSelection(obj)  
+
+
+sel = App.Gui.Selection.getSelection()[0]
+list = listAllBodies(doc)
+links = listAllLinks(doc)
+cleanlist = removeOwnBodyfromList(list,sel)
+features = listAllLastFeatures(cleanlist)
+selectListItems(features)
+#body.newObject('PartDesign::SubShapeBinder','Binder')
+
+
+print("\n")
+
