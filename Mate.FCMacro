@@ -1,0 +1,56 @@
+import FreeCAD
+import PartDesign
+
+def getBodyOf(obj):
+	return obj.getParentGeoFeatureGroup()
+
+
+def getLinkOf(obj):
+		return obj.Parents[1][0]
+
+def getLinkElementOf(obj):
+		return obj.InListRecursive[-1]
+
+def setExpression():
+	expression = parent.Name + '.Placement * ' + parent_mate.Name + '.Placement * ' + child_mate.Name + '.Placement ^ (-1)'
+	print(expression)
+	#child.setExpression('LinkPlacement',expression)
+	#child.setExpression('Placement',None)
+	child.setExpression('Placement',expression)
+
+def clearExpression():
+	child.setExpression('Placement',None)
+
+doc = App.ActiveDocument
+selection = FreeCADGui.Selection.getSelection()
+
+parent = getBodyOf(selection[0])
+child = getBodyOf(selection[1])
+parent_mate = selection[0]
+child_mate = selection[1]
+
+setExpression()
+
+
+
+
+#doc.recompute()
+
+
+print("parent")
+print(parent)
+print("child")
+print(child)
+
+#for obj in selection:
+#	if obj.isDerivedFrom('PartDesign::CoordinateSystem') :
+#		body = getBodyOf(obj)
+#	else :
+#		print("select LCS")
+#		continue
+
+
+
+
+
+
